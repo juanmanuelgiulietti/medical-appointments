@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: medical-appointments
+  jpa:
+    hibernate:
+      ddl-auto: validate
