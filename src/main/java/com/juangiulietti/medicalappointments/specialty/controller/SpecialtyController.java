@@ -34,12 +34,13 @@ public class SpecialtyController {
         return service.getSpecialtyById(id);
     }
 
-    @PatchMapping("/{id}")
+    @PutMapping("/{id}")
     public SpecialtyResponse updateSpecialty(@RequestBody @Valid SpecialtyRequest request, @PathVariable Long id){
         return service.updateSpecialty(request, id);
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteSpecialty(@PathVariable Long id){
         service.deleteSpecialty(id);
     }
