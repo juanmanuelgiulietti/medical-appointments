@@ -7,6 +7,7 @@ API REST para la gestión de turnos de un centro médico con varias sedes.
 - [x] Especialidades (CRUD)
 - [x] Sedes (CRUD)
 - [x] Tipos de consulta (CRUD)
+- [x] Usuarios con roles y contraseña inicial (base para médicos y pacientes)
 - [ ] Médicos
 - [ ] Pacientes
 - [ ] Disponibilidad de turnos
@@ -27,6 +28,13 @@ cd medical-appointments
 ./mvnw spring-boot:run
 ```
 La API queda disponible en `http://localhost:8080`.
+
+### Credenciales del administrador (solo desarrollo)
+Al levantar la app se crea un administrador para probar en local:
+- Email: `admin@example.com`
+- Contraseña: `test1234`
+
+Son credenciales de desarrollo: no deben usarse en producción.
 
 ## Diseño
 
@@ -52,6 +60,27 @@ La API queda disponible en `http://localhost:8080`.
 - **La duración tiene que ser mayor que cero.** Se valida en el DTO (responde 400) y la base lo garantiza con un `CHECK`.
 - **Un tipo de consulta solo se accede a través de su especialidad**: pedirlo con una especialidad que no es la suya responde 404, aunque el id exista.
 - Listar los tipos de consulta de una especialidad que no existe responde 404; si la especialidad existe pero no tiene tipos de consulta, devuelve una lista vacía.
+
+#### Usuarios
+
+##### Creación
+- **Los usuarios no tienen endpoints propios.** Se crean solo a través del alta de médico (la hace un admin) y del registro de paciente (lo hace un recepcionista), en la misma operación que el médico o el paciente.
+- **El usuario se crea con un solo rol:** `DOCTOR` en el alta de médico, `PATIENT` en el de paciente.
+- **El email es único y se guarda en minúsculas y sin espacios.** Se valida en el servicio (responde 409) y la base lo garantiza con `UNIQUE`.
+- El teléfono es opcional.
+
+##### Roles
+- **Un usuario puede tener varios roles.** Los roles posibles son `PATIENT`, `DOCTOR`, `RECEPTIONIST` y `ADMIN`.
+
+##### Contraseñas
+- **La contraseña inicial se genera automáticamente:** 12 caracteres al azar, sin los que se confunden al dictarla (`0`, `O`, `1`, `l`, `I`).
+- **Solo se guarda su hash (BCrypt).** La contraseña en texto plano se muestra una única vez, en la respuesta del alta, y no se puede recuperar.
+
+##### Estado
+- **Los usuarios no se borran: se desactivan.** Todo usuario nace activo y la fecha de creación la asigna la base.
+
+##### Administrador inicial
+- El primer administrador se crea con una migración (V3). Ver las [credenciales de desarrollo](#credenciales-del-administrador-solo-desarrollo).
 
 ## Endpoints
 
@@ -86,3 +115,8 @@ Los errores se devuelven en formato `ProblemDetail` (RFC 9457).
 
 ## Pendientes conocidos
 - Eliminar una especialidad o un tipo de consulta que esté en uso (por ejemplo, con tipos de consulta, médicos o turnos asociados) hoy responde 500, porque la base rechaza el borrado por la clave foránea. Se evaluará responder 409 o usar baja lógica (soft delete) para conservar el historial.
+- Desactivar existe en la entidad (`deactivate`), pero todavía no hay un endpoint que lo use.
+- Un usuario inactivo no debería poder iniciar sesión: se aplica cuando haya login.
+- Agregar un rol a un usuario existente (el médico que además es admin): falta la operación.
+- Obligar a cambiar la contraseña inicial en el primer ingreso: requiere una columna nueva.
+- El administrador de desarrollo no puede existir así en producción: ahí se crearía con variables de entorno.
